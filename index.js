@@ -7,6 +7,9 @@ const { RevAiApiClient } = require('revai-node-sdk');
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+
 app.use(express.static('public'));
 
 console.log('[Server] Rev.ai token loaded:', !!process.env.REVA_API_TOKEN);
@@ -59,18 +62,34 @@ app.post('/transcribe', upload.single('audio'), async (req, res) => {
 
     // Build transcript with speakers
     let finalTranscript = '';
-    if (transcriptData.monologues && transcriptData.monologues.length > 0) {
-      transcriptData.monologues.forEach((mono, index) => {
-        const speaker = mono.speaker !== undefined ? `Speaker ${mono.speaker}` : `Speaker ${index}`;
-        finalTranscript += `${speaker}: `;
-        mono.elements.forEach(el => {
-          if (el.type === 'text') finalTranscript += el.value + ' ';
-        });
-        finalTranscript += '\n\n';
-      });
-    } else {
-      finalTranscript = '[No monologues found]';
-    }
+if (transcriptData.monologues && transcriptData.monologues.length > 0) {
+  transcriptData.monologues.forEach((mono, index) => {
+    const speaker = mono.speaker !== undefined ? `Speaker ${mono.speaker}` : `Speaker ${index}`;
+    finalTranscript += `${speaker}: `;
+
+    mono.elements.forEach((el, i) => {
+      if (el.type === 'text') {
+        finalTranscript += el.value;
+        // Add a space if next element is text (not punctuation)
+        if (mono.elements[i + 1] && mono.elements[i + 1].type === 'text') {
+          finalTranscript += ' ';
+        }
+      } else if (el.type === 'punct') {
+        // Add punctuation directly without space before it
+        finalTranscript += el.value;
+        // Add a space after punctuation if next is text (optional)
+        if (mono.elements[i + 1] && mono.elements[i + 1].type === 'text') {
+          finalTranscript += ' ';
+        }
+      }
+    });
+
+    finalTranscript += '\n\n';
+  });
+} else {
+  finalTranscript = '[No monologues found]';
+}
+
 
     res.json({ transcript: finalTranscript.trim() });
   } catch (error) {
