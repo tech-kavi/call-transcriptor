@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rev.ai Transcription</title>
+</head>
+<body>
+  <h1>Upload Audio for Transcription</h1>
+
+  <input type="file" id="audioFile" accept="audio/*" />
+  <button id="uploadBtn">Upload & Transcribe</button>
+
+  <h2>Transcript:</h2>
+  <!-- ✅ This textarea will display and allow editing of the transcript -->
+  <textarea id="transcript" rows="20" cols="80" style="white-space: pre-wrap;"></textarea>
+
+  <script>
+    const uploadBtn = document.getElementById('uploadBtn');
+    const audioFileInput = document.getElementById('audioFile');
+    const transcriptEl = document.getElementById('transcript');
+
+    uploadBtn.addEventListener('click', async () => {
+      const file = audioFileInput.files[0];
+      if (!file) {
+        alert('Please select an audio file first!');
+        return;
+      }
+
+      transcriptEl.value = 'Uploading and transcribing... Please wait.';
+
+      const formData = new FormData();
+      formData.append('audio', file);
+
+      try {
+        const response = await fetch('/transcribe', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to transcribe file');
+        }
+
+        const data = await response.json();
+
+        // ✅ Assign directly to textarea value to preserve \n as real newlines
+        transcriptEl.value = data.transcript || 'No transcript returned.';
+      } catch (err) {
+        transcriptEl.value = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
