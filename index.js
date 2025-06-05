@@ -31,7 +31,13 @@ app.post('/transcribe', upload.single('audio'), async (req, res) => {
 
   try {
     console.log('[Rev.ai] Submitting job...');
-    const job = await client.submitJobLocalFile(audioPath);
+    // const job = await client.submitJobLocalFile(audioPath);
+    const skipPunctuation = req.body.punctuate === 'false'; // if false string, we skip punctuation
+    console.log(`[POST /transcribe] Punctuation enabled: ${!skipPunctuation}`);
+
+    const job = await client.submitJobLocalFile(audioPath, {
+      skip_punctuation: skipPunctuation,
+    });
     console.log(`[Rev.ai] Job submitted: ${job.id}`);
 
     const waitForCompletion = async (jobId) => {
