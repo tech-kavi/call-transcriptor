@@ -98,6 +98,18 @@
       </label>
     </div>
 
+
+    <div class="options">
+      <label>
+        <input type="radio" name="provider" value="revai" checked />
+        Rev.ai
+      </label>
+      <label>
+        <input type="radio" name="provider" value="assemblyai" />
+        AssemblyAI
+      </label>
+   </div>
+
     <!-- Drag and Drop -->
     <!-- Drag and Drop -->
   <div class="drop-zone" id="dropZone">
@@ -159,11 +171,15 @@
     }
 
     uploadBtn.disabled = true;
+    
+
     transcriptEl.value = 'Uploading and transcribing... Please wait.';
 
     const formData = new FormData();
     formData.append('audio', selectedFile);
     formData.append('punctuate', punctuationToggle.checked ? 'true' : 'false');
+    const provider = document.querySelector('input[name="provider"]:checked').value;
+    formData.append('provider', provider);
 
     try {
       const response = await fetch('/transcribe', {
